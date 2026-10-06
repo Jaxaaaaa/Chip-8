@@ -42,7 +42,7 @@
         InitWindow(64 * SCALE, 32 * SCALE, "Chip8");
         chip8.pc = 0x200;
         SetTargetFPS(60);
-        load_rom("2-ibm-logo.ch8");
+        load_rom("3-corax+.ch8");
         while (!WindowShouldClose()){
             uint16_t instruction = (chip8.memory[chip8.pc] << 8) | chip8.memory[chip8.pc+1];
             printf("%04X\n", instruction);
@@ -63,15 +63,44 @@
                             }
                         }
                     }
+                    else if(instruction == 0x00EE){
+                        chip8.stack_pointer--;
+                        chip8.pc = chip8.stack[chip8.stack_pointer];
+                    }
                     break;
                 case 0x1:
                     chip8.pc = NNN;
+                    break;
+                case 0x2:
+                    chip8.stack[chip8.stack_pointer] = chip8.pc;
+                    chip8.stack_pointer++;
+                    chip8.pc = NNN;
+                    break;
+                case 0x3:
+                    if(chip8.V[X] == NN){
+                        chip8.pc += 2;
+                    }
+                    break;
+                case 0x4:
+                    if(chip8.V[X] != NN){
+                        chip8.pc += 2;
+                    }
+                    break;
+                case 0x5:
+                    if(chip8.V[X] == chip8.V[Y]){
+                        chip8.pc += 2;
+                    }
                     break;
                 case 0x6:
                     chip8.V[X] = NN;
                     break;
                 case 0x7:
                     chip8.V[X] += NN;
+                    break;
+                case 0x9:
+                    if(chip8.V[X] != chip8.V[Y]){
+                        chip8.pc += 2;
+                    }
                     break;
                 case 0xA:
                     chip8.I = NNN;
@@ -80,7 +109,6 @@
                     int x = chip8.V[X] % 64;
                     int y = chip8.V[Y] % 32;
                     chip8.V[0xF] = 0;
-                    printf("DXYN : x=%d y=%d N=%d I=%03X\n", x, y, N, chip8.I);
                     for (int r = 0; r < N; r++){
                         if(y + r >= 32){
                             break;
@@ -100,7 +128,6 @@
                     }
                 }
                     break;
-
             }
             BeginDrawing();
             ClearBackground(BLUE);
