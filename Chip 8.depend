@@ -1,0 +1,12 @@
+# depslib dependency file v1.0
+1791312639 source:d:\mes documents\bureau\esp32\chip8\main.c
+	<stdio.h>
+	<stdlib.h>
+	"raylib.h"
+	<math.h>
+	<stdint.h>
+
+1790697226 d:\mes documents\téléchargements\raylib-6.0_win64_mingw-w64\raylib-6.0_win64_mingw-w64\include\raylib.h
+	<stdarg.h>
+	<stdbool.h>
+
