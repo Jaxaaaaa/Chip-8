@@ -22,6 +22,24 @@
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
+    const int keymap[16] ={
+        KEY_X, //0 du chip 8
+        KEY_ONE,//1
+        KEY_TWO,//2
+        KEY_THREE,//3
+        KEY_Q,//4
+        KEY_W, //5
+        KEY_E, //6
+        KEY_A, //7
+        KEY_S, //8
+        KEY_D, //9
+        KEY_Z, //A
+        KEY_C, //B
+        KEY_FOUR, //C
+        KEY_R, //D
+        KEY_F, //E
+        KEY_V, //F
+        };
     typedef struct {
         uint8_t memory[4096];
         uint8_t V[16];
@@ -35,6 +53,8 @@
         bool keypad[16];
     } Chip8;
     Chip8 chip8;
+    bool screen_drawn = false;
+    int waiting_key = -1;
     void load_rom(const char *filename){
         FILE *file = fopen(filename, "rb");
         if (file == NULL){
@@ -53,6 +73,12 @@
                     DrawRectangle(x*SCALE, y*SCALE, SCALE, SCALE,  GREEN);
                 }
             }
+        }
+    }
+
+    void update_keypad(){
+        for (int i = 0; i<16; i++){
+            chip8.keypad[i] = IsKeyDown(keymap[i]);
         }
     }
 
@@ -117,12 +143,15 @@
                         break;
                     case 0x1:
                         chip8.V[X] |= chip8.V[Y];
+                        chip8.V[0xF] = 0;
                         break;
                     case 0x2:
                         chip8.V[X] &= chip8.V[Y];
+                        chip8.V[0xF] = 0;
                         break;
                     case 0x3:
                         chip8.V[X] ^= chip8.V[Y];
+                        chip8.V[0xF] = 0;
                         break;
                     case 0x4: {
                         uint16_t sum = chip8.V[X] + chip8.V[Y];
@@ -202,10 +231,46 @@
                             }
                         }
                     }
+                    screen_drawn = true;
                 }
+                    break;
+                case 0xE:
+                    switch(NN){
+                        case 0x9E:
+                            if(chip8.keypad[chip8.V[X]]){
+                                chip8.pc +=2;
+                            }
+                            break;
+                        case 0xA1:
+                            if(!chip8.keypad[chip8.V[X]]){
+                                chip8.pc +=2;
+                            }
+                            break;
+                        }
                     break;
                 case 0xF:
                     switch(NN){
+                    case 0x0A:{
+                        if(waiting_key == -1){
+                            for(int i = 0; i<16; i++){
+                                if(chip8.keypad[i]){
+                                    waiting_key = i;
+                                    break;
+                                }
+                            }
+                            chip8.pc -= 2;
+                        }
+                        else{
+                            if(chip8.keypad[waiting_key]){
+                                chip8.pc -=2;
+                            }
+                            else{
+                                chip8.V[X] = waiting_key;
+                                waiting_key = -1;
+                            }
+                        }
+                    }
+                        break;
                     case 0x07:
                         chip8.V[X] = chip8.delay_timer;
                         break;
@@ -230,11 +295,13 @@
                         for (int i = 0; i <= X; i++){
                             chip8.memory[chip8.I+i] = chip8.V[i];
                         }
+                        chip8.I += X+1;
                         break;
                     case 0x65:
                         for(int i = 0; i<= X; i++){
                             chip8.V[i] = chip8.memory[chip8.I+i];
                         }
+                        chip8.I += X+1;
                         break;
                     }
                     break;
@@ -246,13 +313,18 @@
         InitWindow(64 * SCALE, 32 * SCALE, "Chip8");
         chip8.pc = 0x200;
         SetTargetFPS(60);
-        load_rom("3-corax+.ch8");
+        load_rom("6-keypad.ch8");
         for(int i = 0; i<80; i++){
             chip8.memory[0x050+i] = font[i];
         }
         while (!WindowShouldClose()){
+            update_keypad();
+            screen_drawn = false;
             for(int i = 0; i < 10; i ++){
                 emulate_cycle();
+                if(screen_drawn){
+                    break;
+                }
             }
             if(chip8.delay_timer > 0){
                 chip8.delay_timer--;
