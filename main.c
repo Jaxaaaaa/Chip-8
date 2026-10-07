@@ -313,7 +313,7 @@
         InitWindow(64 * SCALE, 32 * SCALE, "Chip8");
         chip8.pc = 0x200;
         SetTargetFPS(60);
-        load_rom("6-keypad.ch8");
+        load_rom("flightrunner.ch8");
         for(int i = 0; i<80; i++){
             chip8.memory[0x050+i] = font[i];
         }
