@@ -4,6 +4,24 @@
     #include <math.h>
     #include <stdint.h>
     #define SCALE 10
+    uint8_t font[80] = {
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+};
     typedef struct {
         uint8_t memory[4096];
         uint8_t V[16];
@@ -39,17 +57,8 @@
     }
 
     void emulate_cycle(){
-
-    }
-    int main()
-    {
-        InitWindow(64 * SCALE, 32 * SCALE, "Chip8");
-        chip8.pc = 0x200;
-        SetTargetFPS(60);
-        load_rom("3-corax+.ch8");
-        while (!WindowShouldClose()){
             uint16_t instruction = (chip8.memory[chip8.pc] << 8) | chip8.memory[chip8.pc+1];
-            printf("%04X\n", instruction);
+            //printf("%04X\n", instruction);
             chip8.pc += 2;
             uint8_t first_number = (instruction & 0xF000) >> 12;
             uint8_t X = (instruction & 0x0F00) >> 8;
@@ -197,8 +206,20 @@
                     break;
                 case 0xF:
                     switch(NN){
+                    case 0x07:
+                        chip8.V[X] = chip8.delay_timer;
+                        break;
+                    case 0x15:
+                        chip8.delay_timer = chip8.V[X];
+                        break;
+                    case 0x18:
+                        chip8.sound_timer = chip8.V[X];
+                        break;
                     case 0x1E:
                         chip8.I += chip8.V[X];
+                        break;
+                    case 0x29:
+                        chip8.I = 0x050 + chip8.V[X] * 5;
                         break;
                     case 0x33:
                         chip8.memory[chip8.I] = chip8.V[X]/100;
@@ -218,6 +239,26 @@
                     }
                     break;
 
+            }
+    }
+    int main()
+    {
+        InitWindow(64 * SCALE, 32 * SCALE, "Chip8");
+        chip8.pc = 0x200;
+        SetTargetFPS(60);
+        load_rom("3-corax+.ch8");
+        for(int i = 0; i<80; i++){
+            chip8.memory[0x050+i] = font[i];
+        }
+        while (!WindowShouldClose()){
+            for(int i = 0; i < 10; i ++){
+                emulate_cycle();
+            }
+            if(chip8.delay_timer > 0){
+                chip8.delay_timer--;
+            }
+            if(chip8.sound_timer > 0){
+                chip8.sound_timer--;
             }
             BeginDrawing();
             ClearBackground(BLUE);
