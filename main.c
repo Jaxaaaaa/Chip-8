@@ -97,6 +97,63 @@
                 case 0x7:
                     chip8.V[X] += NN;
                     break;
+                case 0x8:
+                    switch(N){
+                    case 0x0:
+                        chip8.V[X] = chip8.V[Y];
+                        break;
+                    case 0x1:
+                        chip8.V[X] |= chip8.V[Y];
+                        break;
+                    case 0x2:
+                        chip8.V[X] &= chip8.V[Y];
+                        break;
+                    case 0x3:
+                        chip8.V[X] ^= chip8.V[Y];
+                        break;
+                    case 0x4: {
+                        uint16_t sum = chip8.V[X] + chip8.V[Y];
+                        chip8.V[X] = sum;
+                        if(sum > 255){
+                            chip8.V[0xF] = 1;
+                        }
+                        else{
+                            chip8.V[0xF] = 0;
+                        }
+                        break;
+                    }
+                    case 0x5:{
+                        uint8_t flag = 0;
+                        if(chip8.V[X] >= chip8.V[Y]){
+                            flag = 1;
+                        }
+                        chip8.V[X] -= chip8.V[Y];
+                        chip8.V[0xF] = flag;
+                        break;
+                    }
+                    case 0x6:{
+                        int flag = chip8.V[Y] & 0x01;
+                        chip8.V[X] = chip8.V[Y] >> 1;
+                        chip8.V[0xF] = flag;
+                        break;
+                    }
+                    case 0x7:{
+                        uint8_t flag = 0;
+                        if(chip8.V[Y] >= chip8.V[X]){
+                            flag = 1;
+                        }
+                        chip8.V[X] = chip8.V[Y] - chip8.V[X];
+                        chip8.V[0xF] = flag;
+                        break;
+                    }
+                    case 0xE:{
+                        int flag = (chip8.V[Y] & 0x80) >> 7;
+                        chip8.V[X] = chip8.V[Y] << 1;
+                        chip8.V[0xF] = flag;
+                        break;
+                    }
+                    }
+                    break;
                 case 0x9:
                     if(chip8.V[X] != chip8.V[Y]){
                         chip8.pc += 2;
