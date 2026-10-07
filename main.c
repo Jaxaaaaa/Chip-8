@@ -37,6 +37,10 @@
             }
         }
     }
+
+    void emulate_cycle(){
+
+    }
     int main()
     {
         InitWindow(64 * SCALE, 32 * SCALE, "Chip8");
@@ -162,6 +166,12 @@
                 case 0xA:
                     chip8.I = NNN;
                     break;
+                case 0xB:
+                    chip8.pc = NNN + chip8.V[0];
+                    break;
+                case 0xC:
+                    chip8.V[X] = (GetRandomValue(0, 255) & NN);
+                    break;
                 case 0xD:{
                     int x = chip8.V[X] % 64;
                     int y = chip8.V[Y] % 32;
@@ -185,6 +195,29 @@
                     }
                 }
                     break;
+                case 0xF:
+                    switch(NN){
+                    case 0x1E:
+                        chip8.I += chip8.V[X];
+                        break;
+                    case 0x33:
+                        chip8.memory[chip8.I] = chip8.V[X]/100;
+                        chip8.memory[chip8.I+1] = (chip8.V[X]/10)%10;
+                        chip8.memory[chip8.I+2] = chip8.V[X]%10;
+                        break;
+                    case 0x55:
+                        for (int i = 0; i <= X; i++){
+                            chip8.memory[chip8.I+i] = chip8.V[i];
+                        }
+                        break;
+                    case 0x65:
+                        for(int i = 0; i<= X; i++){
+                            chip8.V[i] = chip8.memory[chip8.I+i];
+                        }
+                        break;
+                    }
+                    break;
+
             }
             BeginDrawing();
             ClearBackground(BLUE);
